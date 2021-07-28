@@ -20,6 +20,50 @@
 	<link rel="publisher" href="https://plus.google.com/+BillMei" />
 
 	<link href="css/styles.css"  rel="stylesheet" media="all"/>
+	<script src="https://unpkg.com/@amplitude/experiment-js-client@1.0.3/dist/experiment.umd.js"></script>
+
+	<script type="text/javascript">
+	(function(e,t){var n=e.amplitude||{_q:[],_iq:{}};var r=t.createElement("script")
+	;r.type="text/javascript"
+	;r.integrity="sha384-AUydfiSe1Ky1zDY/KCJrSDvNC/Rb1TyoiQ10xfyB/LUYw8GOwJ07SUTa9SxvinL2"
+	;r.crossOrigin="anonymous";r.async=true
+	;r.src="https://cdn.amplitude.com/libs/amplitude-7.4.1-min.gz.js"
+	;r.onload=function(){if(!e.amplitude.runQueuedFunctions){
+	console.log("[Amplitude] Error: could not load SDK")}}
+	;var i=t.getElementsByTagName("script")[0];i.parentNode.insertBefore(r,i)
+	;function s(e,t){e.prototype[t]=function(){
+	this._q.push([t].concat(Array.prototype.slice.call(arguments,0)));return this}}
+	var o=function(){this._q=[];return this}
+	;var a=["add","append","clearAll","prepend","set","setOnce","unset"]
+	;for(var c=0;c<a.length;c++){s(o,a[c])}n.Identify=o;var u=function(){this._q=[]
+	;return this}
+	;var l=["setProductId","setQuantity","setPrice","setRevenueType","setEventProperties"]
+	;for(var p=0;p<l.length;p++){s(u,l[p])}n.Revenue=u
+	;var d=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","enableTracking","setGlobalUserProperties","identify","clearUserProperties","setGroup","logRevenueV2","regenerateDeviceId","groupIdentify","onInit","logEventWithTimestamp","logEventWithGroups","setSessionId","resetSessionId"]
+	;function v(e){function t(t){e[t]=function(){
+	e._q.push([t].concat(Array.prototype.slice.call(arguments,0)))}}
+	for(var n=0;n<d.length;n++){t(d[n])}}v(n);n.getInstance=function(e){
+	e=(!e||e.length===0?"$default_instance":e).toLowerCase()
+	;if(!n._iq.hasOwnProperty(e)){n._iq[e]={_q:[]};v(n._iq[e])}return n._iq[e]}
+	;e.amplitude=n})(window,document);
+
+	var experiment = new Experiment.StubExperimentClient();
+	var experimentReady = new Promise((resolve, reject) => {
+	  amplitude.getInstance().init('7db91a5c4478515a346dc05c8cd93425', 'experiment-test', null, function(instance) {
+	    const apiKey = 'client-SkFY7JrOqJge2Fv7aU4mB1BKdacKDPBb';
+	    const config = { debug: true }; // Any custom configuration (e.g. {debug: true})
+	    experiment = Experiment.Experiment.initialize(apiKey, config);
+	    experiment.setUserProvider(new Experiment.AmplitudeUserProvider(instance));
+	    resolve();
+	  });
+	});
+
+	const fetchWhenReady = async () => {
+	  await window.experimentReady;
+	  await window.experiment.fetch();
+	}
+
+	</script>
 </head>
 <body>
 <div class="container">
@@ -74,6 +118,26 @@
 <a href="https://github.com/billmei/battleboat"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
 
 <script>
+function isEmpty(obj) {
+    return Object.keys(obj).length === 0;
+}
+
+fetchWhenReady().then(() => {
+	var tagline = document.getElementsByClassName('tagline')[0];
+
+	const variant = experiment.variant('ps-test-example');
+
+	if (variant.value === 'control') {
+		tagline.innerHTML = 'Showing Experiment Control'
+		tagline.style.color = "blue";
+	} else if (variant.value === 'treatment') {
+		tagline.innerHTML = 'Showing Experiment Treatment'
+		tagline.style.color = "red";
+	} else if (isEmpty(variant)) {
+		tagline.innerHTML = 'No variants were fetched'
+	}
+});
+
 // Don't change this variable.
 var DEBUG_MODE = localStorage.getItem('DEBUG_MODE') === 'true';
 // To turn DEBUG_MODE on, run `setDebug(true);` in the console.

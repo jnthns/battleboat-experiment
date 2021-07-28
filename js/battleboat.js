@@ -1,4 +1,10 @@
 (function() {
+// setTimeout(function() {
+// 	console.log("hi")
+// }, 500);
+
+
+
 // Battleboat
 // Bill Mei, 2014
 // MIT License
@@ -184,6 +190,7 @@ function Game(size) {
 	this.shotsTaken = 0;
 	this.createGrid();
 	this.init();
+	amplitude.getInstance().logEvent('Initialize Game');
 }
 Game.size = 10; // Default grid size is 10x10
 Game.gameOver = false;
@@ -196,6 +203,10 @@ Game.prototype.checkIfWon = function() {
 		Game.stats.syncStats();
 		Game.stats.updateStatsSidebar();
 		this.showRestartSidebar();
+		amplitude.getInstance().logEvent('Game Over Rox', {
+		win: true,
+		shotsTaken: Game.stats.shotsTaken,
+		});
 	} else if (this.humanFleet.allShipsSunk()) {
 		alert('Yarr! The computer sank all your ships. Try again.');
 		Game.gameOver = true;
@@ -203,6 +214,10 @@ Game.prototype.checkIfWon = function() {
 		Game.stats.syncStats();
 		Game.stats.updateStatsSidebar();
 		this.showRestartSidebar();
+		amplitude.getInstance().logEvent('Game Over Rox', {
+		win: false,
+		shotsTaken: Game.stats.shotsTaken,
+		});
 	}
 };
 // Shoots at the target player on the grid.
@@ -253,6 +268,11 @@ Game.prototype.shootListener = function(e) {
 		if (gameTutorial.showTutorial) {
 			gameTutorial.nextStep();
 		}
+	amplitude.getInstance().logEvent('Shoot Ship', {
+	x: x,
+	y: y,
+	hit: result === CONST.TYPE_HIT,
+});
 	}
 
 	if (result !== null && !Game.gameOver) {
@@ -288,6 +308,9 @@ Game.prototype.rosterListener = function(e) {
 	document.getElementById(Game.placeShipType).setAttribute('class', 'placing');
 	Game.placeShipDirection = parseInt(document.getElementById('rotate-button').getAttribute('data-direction'), 10);
 	self.placingOnGrid = true;
+amplitude.getInstance().logEvent('Select Ship', {
+	ship: Game.placeShipType
+});
 };
 // Creates click event listeners on the human player's grid to handle
 // ship placement after the user has selected a ship name
@@ -300,7 +323,13 @@ Game.prototype.placementListener = function(e) {
 		
 		// Don't screw up the direction if the user tries to place again.
 		var successful = self.humanFleet.placeShip(x, y, Game.placeShipDirection, Game.placeShipType);
+		
 		if (successful) {
+			amplitude.getInstance().logEvent('Place Ship', {
+			ship: Game.placeShipType,
+			success: true,
+			});
+
 			// Done placing this ship
 			self.endPlacing(Game.placeShipType);
 
@@ -323,7 +352,13 @@ Game.prototype.placementListener = function(e) {
 				el.setAttribute('class', 'invisible');
 			}
 		}
-	}
+		else {
+			amplitude.getInstance().logEvent('Place Ship', {
+			ship: Game.placeShipType,
+			success: false,
+			});
+		} 
+}
 };
 // Creates mouseover event listeners that handles mouseover on the
 // human player's grid to draw a phantom ship implying that the user
@@ -385,6 +420,9 @@ Game.prototype.toggleRotation = function(e) {
 		e.target.setAttribute('data-direction', '0');
 		Game.placeShipDirection = Ship.DIRECTION_VERTICAL;
 	}
+amplitude.getInstance().logEvent('Rotate Ship', {
+	ship: Game.placeShipType
+});
 };
 // Click handler for the Start Game button
 Game.prototype.startGame = function(e) {
@@ -400,6 +438,7 @@ Game.prototype.startGame = function(e) {
 		gameTutorial.nextStep();
 	}
 	el.removeEventListener(transitionEndEventName(),fn,false);
+	amplitude.getInstance().logEvent('Start Game');
 };
 // Click handler for Restart Game button
 Game.prototype.restartGame = function(e) {
